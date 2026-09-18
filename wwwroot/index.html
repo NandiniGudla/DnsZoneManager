@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNS Zone Manager</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="css/site.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">DNS Zone Manager</span>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Zone list -->
+      <aside class="col-md-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Zones</h5>
+          <button class="btn btn-sm btn-primary" id="newZoneBtn">Create Zone</button>
+        </div>
+        <div id="zoneList" class="list-group"></div>
+      </aside>
+
+      <!-- Zone detail -->
+      <main class="col-md-8">
+        <div id="emptyState" class="text-muted text-center mt-5">
+          <p>Select a zone on the left, or create a new one, to view and manage its DNS records.</p>
+        </div>
+
+        <div id="zoneDetail" class="d-none">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h4 id="zoneName" class="mb-0"></h4>
+              <small class="text-muted" id="zoneMeta"></small>
+            </div>
+            <div>
+              <button class="btn btn-outline-primary btn-sm" id="newRecordBtn">Add Record</button>
+              <button class="btn btn-outline-secondary btn-sm" id="editZoneBtn">Edit Zone</button>
+              <button class="btn btn-outline-danger btn-sm" id="deleteZoneBtn">Delete Zone</button>            </div>
+          </div>
+
+          <table class="table table-hover align-middle bg-white">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>TTL</th>
+                <th>Data</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recordRows"></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- New zone modal -->
+  <div class="modal fade" id="zoneModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="zoneForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="zoneModalTitle">New Zone</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger d-none" id="zoneFormError"></div>
+            <label class="form-label" for="zoneNameInput">Domain name</label>
+            <input type="text" class="form-control" id="zoneNameInput" placeholder="example.com" required />
+            <div class="form-text">A new zone starts out with 4 default NS records, since every DNS zone needs them.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="zoneSubmitBtn">Create Zone</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- New / edit record modal -->
+  <div class="modal fade" id="recordModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="recordForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="recordModalTitle">New Record</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger d-none" id="recordFormError"></div>
+            <input type="hidden" id="recordId" />
+
+            <div class="mb-3">
+              <label class="form-label" for="recordNameInput">Name</label>
+              <input type="text" class="form-control" id="recordNameInput" placeholder="@ or www" />
+              <div class="form-text">Use "@" for the zone root.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="recordTypeInput">Type</label>
+              <select class="form-select" id="recordTypeInput">
+                <option value="A">A</option>
+                <option value="AAAA">AAAA</option>
+                <option value="CNAME">CNAME</option>
+                <option value="NS">NS</option>
+                <option value="TXT">TXT</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="recordTtlInput">TTL (seconds)</label>
+              <input type="number" class="form-control" id="recordTtlInput" value="3600" min="60" max="604800" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="recordDataInput">Data</label>
+              <input type="text" class="form-control" id="recordDataInput" placeholder="e.g. 192.0.2.10" />
+              <div class="form-text" id="recordDataHint"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="recordSubmitBtn">Add Record</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

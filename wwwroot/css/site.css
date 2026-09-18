@@ -1,0 +1,18 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.list-group-item.active-zone {
+  background-color: #e7f1ff;
+  border-color: #b6d4fe;
+  font-weight: 600;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+code.record-data {
+  word-break: break-all;
+}
