@@ -13,6 +13,8 @@ public class RecordsController : ApiControllerBase
     /// </summary>
     private readonly IDnsZoneService _svc;
 
+    protected override string ResourceName => "DNS record";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RecordsController"/> class with the specified DNS zone service.
     /// </summary>

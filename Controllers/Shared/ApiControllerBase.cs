@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 public abstract class ApiControllerBase : ControllerBase
 {
+    protected abstract string ResourceName { get; }
     /// <summary>
     /// Converts a <see cref="ServiceResult{T}"/> to an <see cref ="IActionResult"/>. If the service result indicates success, it invokes the provided <paramref name="onSuccess"/> function to generate the response. If the service result indicates failure, it returns a 400 or 404 response with the error messages.
     /// </summary>
@@ -14,6 +15,7 @@ public abstract class ApiControllerBase : ControllerBase
     {
         if (result.Success) return onSuccess(result.Data!);
         var isNotFound = result.Errors.Any(e => e.Contains("not found", StringComparison.OrdinalIgnoreCase));
-        return StatusCode(isNotFound ? 404 : 400, new { errors = result.Errors });
+        var errors = result.Errors.Count > 0 ? result.Errors : new List<string> { $"The requested {ResourceName} could not be processed." };
+        return StatusCode(isNotFound ? 404 : 400, new { errors });
     }
 }

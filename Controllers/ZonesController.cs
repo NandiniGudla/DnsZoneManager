@@ -12,6 +12,7 @@ public class ZonesController : ApiControllerBase
     /// The service that handles DNS zone operations.
     /// </summary>
     private readonly IDnsZoneService _svc;
+    protected override string ResourceName => "DNS zone";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ZonesController"/> class with the specified DNS zone service.

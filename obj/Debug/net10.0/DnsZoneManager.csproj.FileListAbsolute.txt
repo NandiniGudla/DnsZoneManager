@@ -40,3 +40,4 @@ D:\.Net core\DnsZoneManager\obj\Debug\net10.0\DnsZoneManager.genruntimeconfig.ca
 D:\.Net core\DnsZoneManager\obj\Debug\net10.0\ref\DnsZoneManager.dll
 D:\.Net core\DnsZoneManager\obj\Debug\net10.0\compressed\fpdh05tx13-{0}-ooec1yhbr6-ooec1yhbr6.gz
 D:\.Net core\DnsZoneManager\obj\Debug\net10.0\compressed\ewfuabemwj-{0}-l89cpj8ul0-l89cpj8ul0.gz
+D:\.Net core\DnsZoneManager\obj\Debug\net10.0\DnsZoneManager.sourcelink.json

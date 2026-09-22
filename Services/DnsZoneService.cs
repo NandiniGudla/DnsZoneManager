@@ -1,6 +1,3 @@
-using System.Net;
-using System.Net.Sockets;
-using System.Text.RegularExpressions;
 using DnsZoneManager.Data;
 using DnsZoneManager.Dtos;
 using DnsZoneManager.Models;
@@ -18,31 +15,16 @@ namespace DnsZoneManager.Services;
 ///   - Deleting/retyping an NS record is rejected if it would drop the zone below 4 NS records.
 /// </summary>
 public class DnsZoneService : IDnsZoneService
-{
-    private const int MaxRecordsPerZone = 10;
-    private const int MinNsRecords = 4;
-
-    // A conservative FQDN pattern: labels of 1-63 alphanumeric/hyphen chars (no leading/
-    // trailing hyphen), at least two labels, total length capped by the label regex itself.
-    private static readonly Regex FqdnRegex = new(
-        @"^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))+$",
-        RegexOptions.Compiled);
-
-    // Record name: "@" (zone root) or a host label / wildcard / underscore-prefixed
-    // label (e.g. "_dmarc", used by the sample zone file) with optional sub-labels.
-    private static readonly Regex RecordNameRegex = new(
-        @"^(@|(\*\.)?(_)?[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9_-]{1,63})*)$",
-        RegexOptions.Compiled);
-
-    private static readonly Regex Ipv4Regex = new(
-        @"^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$",
-        RegexOptions.Compiled);
+{  
 
     private readonly DnsContext _db;
+    private readonly IDnsZoneRule _rule;
 
-    public DnsZoneService(DnsContext db)
+
+    public DnsZoneService(DnsContext db, IDnsZoneRule rule)
     {
         _db = db;
+        _rule = rule;
     }
 
     public async Task<List<ZoneSummaryDto>> GetZonesAsync()
@@ -65,7 +47,7 @@ public class DnsZoneService : IDnsZoneService
     {
         var name = (request.Name ?? string.Empty).Trim().TrimEnd('.').ToLowerInvariant();
 
-        if (name.Length == 0 || !FqdnRegex.IsMatch(name))
+        if (name.Length == 0 || !_rule.FqdnRegex.IsMatch(name))
             return ServiceResult<ZoneDetailDto>.Fail("Enter a valid domain name, e.g. \"example.com\".");
 
         if (await _db.DnsZones.AnyAsync(z => z.Name == name))
@@ -75,7 +57,7 @@ public class DnsZoneService : IDnsZoneService
 
         // Assumption: "An empty zone file should contain a minimum of (4)
         // NS records." .
-        for (var i = 1; i <= MinNsRecords; i++)
+        for (var i = 1; i <= _rule.MinNsRecords; i++)
         {
             zone.Records.Add(new DnsRecord
             {
@@ -98,7 +80,7 @@ public class DnsZoneService : IDnsZoneService
 
         var name = (request.Name ?? string.Empty).Trim().TrimEnd('.').ToLowerInvariant();
 
-        if (name.Length == 0 || !FqdnRegex.IsMatch(name))
+        if (name.Length == 0 || !_rule.FqdnRegex.IsMatch(name))
             return ServiceResult<ZoneDetailDto>.Fail("Enter a valid domain name, e.g. \"example.com\".");
 
         var duplicate = await _db.DnsZones.AnyAsync(z => z.Id != id && z.Name == name);
@@ -129,8 +111,8 @@ public class DnsZoneService : IDnsZoneService
             out var name, out var type);
         if (errors.Count > 0) return ServiceResult<RecordDto>.Fail(errors.ToArray());
 
-        if (zone.Records.Count >= MaxRecordsPerZone)
-            return ServiceResult<RecordDto>.Fail($"A zone may not contain more than {MaxRecordsPerZone} records.");
+        if (zone.Records.Count >= _rule.MaxRecordsPerZone)
+            return ServiceResult<RecordDto>.Fail($"A zone may not contain more than {_rule.MaxRecordsPerZone} records.");
 
         var data = request.Data.Trim();
 
@@ -170,8 +152,8 @@ public class DnsZoneService : IDnsZoneService
         if (record.Type == RecordType.NS && type != RecordType.NS)
         {
             var remainingNs = zone.Records.Count(r => r.Type == RecordType.NS && r.Id != recordId);
-            if (remainingNs < MinNsRecords)
-                return ServiceResult<RecordDto>.Fail($"A zone must keep at least {MinNsRecords} NS records.");
+            if (remainingNs < _rule.MinNsRecords)
+                return ServiceResult<RecordDto>.Fail($"A zone must keep at least {_rule.MinNsRecords} NS records.");
         }
 
         var data = request.Data.Trim();
@@ -203,9 +185,9 @@ public class DnsZoneService : IDnsZoneService
         if (record.Type == RecordType.NS)
         {
             var remainingNs = zone.Records.Count(r => r.Type == RecordType.NS && r.Id != recordId);
-            if (remainingNs < MinNsRecords)
+            if (remainingNs < _rule.MinNsRecords)
                 return ServiceResult<bool>.Fail(
-                    $"A zone must keep at least {MinNsRecords} NS records — add a replacement before deleting this one.");
+                    $"A zone must keep at least {_rule.MinNsRecords} NS records — add a replacement before deleting this one.");
         }
 
         _db.DnsRecords.Remove(record);
@@ -228,7 +210,7 @@ public class DnsZoneService : IDnsZoneService
         name = (nameInput ?? string.Empty).Trim();
         if (name.Length == 0) name = "@";
 
-        if (name != "@" && !RecordNameRegex.IsMatch(name))
+        if (name != "@" && !_rule.RecordNameRegex.IsMatch(name))
             errors.Add("Record name must be \"@\" (zone root) or a valid host label, e.g. \"www\" or \"_dmarc\".");
 
         if (!Enum.TryParse(typeInput, ignoreCase: true, out type) || !Enum.IsDefined(type))
