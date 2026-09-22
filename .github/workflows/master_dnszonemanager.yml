@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - DnsZoneManager
+name: Build and deploy ASP.Net Core app to Azure Web App - dnszonemanager
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 'dotnet8.x'
+          dotnet-version: '8.x'
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
@@ -51,15 +51,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F952674E794C46279B58DB315B4BA861 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B9476C196CA04CE6A8B09AF90471BDBA }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D0060413952B4CFEB8B581CAF050366F }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F928F7EFD86F44E4B91F6E31439726F4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D379BCB7E5C4BFC86E7B6F8FC0B2B9D }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FE086C82D326451183924762A8BB36F2 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'DnsZoneManager'
+          app-name: 'dnszonemanager'
           slot-name: 'Production'
           package: .
           
