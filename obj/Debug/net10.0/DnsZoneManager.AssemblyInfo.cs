@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DnsZoneManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4e32fe67003514a41d900afa77e95c5a0713ebfa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ed8159291f3859bff44bb78ddfd804aad79700f2")]
 [assembly: System.Reflection.AssemblyProductAttribute("DnsZoneManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DnsZoneManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
